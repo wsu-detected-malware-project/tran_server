@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monitor</title>
+    <!-- <meta http-equiv="refresh" content="5"> -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #ccc;
+            font-family: Arial, sans-serif;
+        }
+        .chart-container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        canvas {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        #status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="chart-container">
+    <div id="status-indicator">Disconnected</div>
+    <canvas id="uploadChart"></canvas>
+</div>
+
+<script>
+    const statusIndicator = document.getElementById('status-indicator');
+    const ctx = document.getElementById('uploadChart').getContext('2d');
+    let chart;
+
+    function updateStatus() {
+        fetch('/check_link')
+            .then(res => {
+                if (res.ok) {
+                    statusIndicator.textContent = 'Connected';
+                    statusIndicator.style.backgroundColor = 'green';
+                } else {
+                    statusIndicator.textContent = 'Disconnected';
+                    statusIndicator.style.backgroundColor = 'red';
+                }
+            })
+            .catch(() => {
+                statusIndicator.textContent = 'Disconnected';
+                statusIndicator.style.backgroundColor = 'red';
+            });
+    }
+
+    function updateChart() {
+        fetch('/upload-stats')
+            .then(response => response.json())
+            .then(data => {
+                if (!chart) {
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                data: data.values,
+                                borderColor: 'limegreen',
+                                borderWidth: 1,
+                                pointRadius: 0,
+                                tension: 0.2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false }},
+                            scales: {
+                                x: { ticks: { color: '#aaa' }, grid: { display: false }},
+                                y: { beginAtZero: true, min: 0, max: 10, ticks: { color: '#aaa', precision: 0 }, grid: { color: '#333' } }
+                            }
+                        }
+                    });
+                } else {
+                    chart.data.labels = data.labels;
+                    chart.data.datasets[0].data = data.values;
+                    chart.update();
+                }
+            });
+    }
+
+    // 최초 실행
+    updateStatus();
+    updateChart();
+
+    // 상태는 2초마다 갱신
+    setInterval(updateStatus, 2000);
+
+    // 그래프는 5초마다 갱신
+    setInterval(updateChart, 5000);
+</script>
+</body>
+</html>

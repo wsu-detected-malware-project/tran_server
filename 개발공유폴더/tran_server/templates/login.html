@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}"/>
+  <title>로그인</title>
+</head>
+<body>
+  <div class="login-container">
+    <h2>로그인</h2>
+    <form method="POST" action="/login">
+      <input type="password" name="password" placeholder="비밀번호 입력" required>
+      <button type="submit">로그인</button>
+    </form>
+  </div>
+  {% if error %}
+    <script>
+      alert({{ error | tojson }});
+    </script>
+  {% endif %}
+</body>
+</html>
